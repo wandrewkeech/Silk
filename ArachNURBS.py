@@ -2232,11 +2232,60 @@ class ControlPoly4_FirstElement:	# made from the first element of a single sketc
 	def execute(self, fp):
 		'''Do something when doing a recomputation, this method is mandatory'''
 		# process the sketch...error check later
+
+
 		# line below getting first element from shape worked for 10 years, but became unreliable in FreeCAD 1.x
 		# ElemNurbs=fp.Sketch.Shape.Edges[-1].toNurbs().Edge1.Curve
 		# now trying to work with "Geometry" attribute of sketch, hoping that the element display in sketch editor 
 		# matches the object ordering
-		ElemNurbs=fp.Sketch.Geometry[0].toNurbs()
+		# ElemNurbs=fp.Sketch.Geometry[0].toNurbs()
+
+		# the change above from
+		# ElemNurbs=fp.Sketch.Shape.Edges[-1].toNurbs().Edge1.Curve
+		# to 
+		# ElemNurbs=fp.Sketch.Geometry[0].toNurbs()
+		# doesn't work for sketcher splines (TypeId == 'Part::GeomBSplineCurve')
+		# so let's look inside the sketch, at element types, and construction flags
+
+
+		sketch = fp.Sketch
+		geom = fp.Sketch.Geometry
+		print('processing contents of sketch for ControlPoly4_FirstElement: ', fp.Label)
+		geoTypes = [[],[],[]]
+		for i in range(0, geom.__len__()):
+			if sketch.getConstruction(i) == False:
+				print(i, geom[i])
+				if geom[i].TypeId =='Part::GeomLineSegment':
+					print('found lineSegment at', i)
+					geoTypes[0].append(i)
+				if geom[i].TypeId =='Part::GeomArcOfCircle':
+					print('found arcOfCircle at', i)
+					geoTypes[1].append(i)
+				if geom[i].TypeId =='Part::GeomBSplineCurve':
+					print('found BSplineCurce at', i)
+					if geom[i].Degree == 3 and geom[i].NbPoles == 4:
+						geoTypes[2].append(i)
+					else:
+						print('found BSplineCurce ', i, 'is not of the correct type')
+				# unhandled types:
+				# Part::GeomCircle
+				# ...
+
+		print(geoTypes)
+		if geoTypes[2].__len__() > 0 :
+			# the sketch has at least one spline, grab the first one
+			ElemNurbs = geom[geoTypes[2][0]].toNurbs()
+		elif geoTypes[1].__len__() > 0:
+			# the sketch has at least one arc, grab the first one
+			ElemNurbs = geom[geoTypes[1][0]].toNurbs()
+		elif geoTypes[0].__len__() > 0:
+			# the sketch has at least one line segment, grab the first one
+			ElemNurbs = geom[geoTypes[0][0]].toNurbs()
+
+
+
+
+		# now
 		ElemNurbs.increaseDegree(3)
 		p0s=ElemNurbs.getPole(1)
 		p1s=ElemNurbs.getPole(2)
@@ -2771,15 +2820,62 @@ class ControlPoly6_FirstElement:	# made from the first element of a single sketc
 		if 'Restore' in fp.State:
 			# print("Restore in fp.state")
 			return  # or do some special thing
+		
+
+
 		# process the sketch element...error check later
 		ElemNurbs=fp.Sketch.Shape.Edges[0].toNurbs().Edge1.Curve
 		ElemNurbs.increaseDegree(3)
 		start=ElemNurbs.FirstParameter
 		end=ElemNurbs.LastParameter
-		knot1=start+(end-start)/3.0
-		knot2=end-(end-start)/3.0
-		ElemNurbs.insertKnot(knot1)
-		ElemNurbs.insertKnot(knot2)
+		if ElemNurbs.NbKnots == 2:
+			knot1=start+(end-start)/3.0
+			knot2=end-(end-start)/3.0
+			ElemNurbs.insertKnot(knot1)
+			ElemNurbs.insertKnot(knot2)
+		
+
+		# below is the stuff from ControlPoly4_FirstElement to process a sketch correctly.
+		# i don't want to! maybe later.
+		'''
+		sketch = fp.Sketch
+		geom = fp.Sketch.Geometry
+		print('processing contents of sketch for ControlPoly4_FirstElement: ', fp.Label)
+		geoTypes = [[],[],[]]
+		for i in range(0, geom.__len__()):
+			if sketch.getConstruction(i) == False:
+				print(i, geom[i])
+				if geom[i].TypeId =='Part::GeomLineSegment':
+					print('found lineSegment at', i)
+					geoTypes[0].append(i)
+				if geom[i].TypeId =='Part::GeomArcOfCircle':
+					print('found arcOfCircle at', i)
+					geoTypes[1].append(i)
+				if geom[i].TypeId =='Part::GeomBSplineCurve':
+					print('found BSplineCurce at', i)
+					if geom[i].Degree == 3 and geom[i].NbPoles == 4:
+						geoTypes[2].append(i)
+					else:
+						print('found BSplineCurce ', i, 'is not of the correct type')
+				# unhandled types:
+				# Part::GeomCircle
+				# ...
+
+		print(geoTypes)
+		if geoTypes[2].__len__() > 0 :
+			# the sketch has at least one spline, grab the first one
+			ElemNurbs = geom[geoTypes[2][0]].toNurbs()
+		elif geoTypes[1].__len__() > 0:
+			# the sketch has at least one arc, grab the first one
+			ElemNurbs = geom[geoTypes[1][0]].toNurbs()
+		elif geoTypes[0].__len__() > 0:
+			# the sketch has at least one line segment, grab the first one
+			ElemNurbs = geom[geoTypes[0][0]].toNurbs()
+		'''
+
+
+
+
 		p00=ElemNurbs.getPole(1)
 		p01=ElemNurbs.getPole(2)
 		p02=ElemNurbs.getPole(3)
