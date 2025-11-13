@@ -2250,19 +2250,19 @@ class ControlPoly4_FirstElement:	# made from the first element of a single sketc
 
 		sketch = fp.Sketch
 		geom = fp.Sketch.Geometry
-		print('processing contents of sketch for ControlPoly4_FirstElement: ', fp.Label)
+		# print('processing contents of sketch for ControlPoly4_FirstElement: ', fp.Label)
 		geoTypes = [[],[],[]]
 		for i in range(0, geom.__len__()):
 			if sketch.getConstruction(i) == False:
-				print(i, geom[i])
+				# print(i, geom[i])
 				if geom[i].TypeId =='Part::GeomLineSegment':
-					print('found lineSegment at', i)
+					# print('found lineSegment at', i)
 					geoTypes[0].append(i)
 				if geom[i].TypeId =='Part::GeomArcOfCircle':
-					print('found arcOfCircle at', i)
+					# print('found arcOfCircle at', i)
 					geoTypes[1].append(i)
 				if geom[i].TypeId =='Part::GeomBSplineCurve':
-					print('found BSplineCurce at', i)
+					# print('found BSplineCurce at', i)
 					if geom[i].Degree == 3 and geom[i].NbPoles == 4:
 						geoTypes[2].append(i)
 					else:
@@ -2271,7 +2271,7 @@ class ControlPoly4_FirstElement:	# made from the first element of a single sketc
 				# Part::GeomCircle
 				# ...
 
-		print(geoTypes)
+		# print(geoTypes)
 		if geoTypes[2].__len__() > 0 :
 			# the sketch has at least one spline, grab the first one
 			ElemNurbs = geom[geoTypes[2][0]].toNurbs()
